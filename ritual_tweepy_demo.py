@@ -11,6 +11,15 @@ import tweepy
 from tweepy import OAuthHandler
 import json
 from random import randrange
+import os
+
+
+# In[17]:
+
+
+# open json with keys and assign keys
+with open('/Users/tnightengale/Desktop/Projects/Ritual_Tweepy/'+"authentication.json", "r") as read_file:
+    keys = json.load(read_file)
 
 
 # In[13]:
@@ -82,44 +91,20 @@ clients, extensions = ritual_establishments(ritual_site,2)
 
 global extensions
 global clients
-c_key = ''
-cs_key = ''
-a_token = ''
-as_token = ''
 
 
-# In[2]:
+# In[25]:
 
 
-consumer_key = c_key
-consumer_secret = cs_key
-access_token = a_token
-access_secret = as_token
+consumer_key = keys['lunchatron9000']['(API key)']
+consumer_secret = keys['lunchatron9000']['(API secret key)']
+access_token = keys['lunchatron9000']['(Access token)']
+access_secret = keys['lunchatron9000']['(Access token secret)']
  
 auth = OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_secret)
  
 api = tweepy.API(auth)
-
-
-# In[3]:
-
-
-tweepy.Cursor(api.followers).items().next
-
-
-# In[4]:
-
-
-def limit_handled(cursor):
-    while True:
-        try:
-            yield cursor.next()
-        except tweepy.RateLimitError:
-            time.sleep(15 * 60)
-
-for follower in limit_handled(tweepy.Cursor(api.followers).items()):
-    print(follower.screen_name)
 
 
 # In[36]:
