@@ -1,5 +1,6 @@
 # ritual-tweepy-demo
-A project to experiment with web-scraping and the tweepy API
+
+## A project to experiment with web-scraping and the tweepy API
 
 
 This project is a place to experiment with web-scraping and the tweepy API.
