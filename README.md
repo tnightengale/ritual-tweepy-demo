@@ -10,7 +10,7 @@ The current ritual_tweepy_demo.py file is used to run a tweepy.stream with the c
 When this account receives a mention asking it where one should eat lunch, it returns a random restaurant in
 the downtown of Toronto and the corresponding link to the restaurant on the food ordering platform, Ritual.
 
-![Alt text](resources/screenshot1.png?raw=true "Title")     
+![Alt text](resources/screenshot2.png?raw=true "Title")     
 
 ### Future uses for this project include:
 
