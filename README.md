@@ -5,7 +5,7 @@
 
 This project is a place to experiment with web-scraping and the tweepy API.
 
-The current .py file is used to run a tweepy.stream with the credentials of a burner twitter account called @lunchatron9000.
+The current .py file is used to run a tweepy.stream with the credentials of a burner twitter account called @lunchatron9000: <https://twitter.com/lunchatron9000>
 
 When this account receives a mention asking it where one should eat lunch, it returns a random restaurant in
 the downtown of Toronto and the corresponding link to the restaurant on the food ordering platform, Ritual.
