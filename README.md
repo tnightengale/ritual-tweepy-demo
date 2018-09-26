@@ -12,6 +12,6 @@ the downtown of Toronto and the corresponding link to the restaurant on the food
 
 Future uses for this project include:
 * enabling restaurants to sign in with Oauth twitter credentials and automatically reply with a link to their restaurant on Ritual
-* collecting tweets about restaurants on Ritual's platform for furture analysis (eg. sentiment analysis or time-series analysis)
-* collecting information on twitter users who interact with restaurants on Ritual.
+* collecting tweets about restaurants on Ritual's platform for future analysis (eg. sentiment analysis or time-series analysis)
+* collecting information on twitter users who interact with restaurants on Ritual
 
