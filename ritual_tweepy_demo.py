@@ -82,15 +82,10 @@ ritual_site = 'https://order.ritual.co/city/toronto'
 
 # In[15]:
 
-
-clients, extensions = ritual_establishments(ritual_site,2)
-
-
-# In[32]:
-
-
 global extensions
 global clients
+
+clients, extensions = ritual_establishments(ritual_site,2)
 
 
 # In[25]:
@@ -107,7 +102,7 @@ auth.set_access_token(access_token, access_secret)
 api = tweepy.API(auth)
 
 
-# In[36]:
+# In[27]:
 
 
 #override tweepy.StreamListener to add logic to on_status
@@ -121,12 +116,14 @@ class MyStreamListener(tweepy.StreamListener):
     
     def on_status(self, status):
         # process tweet
+    
         text = status.text
         sender = '@' + status.user.screen_name
+        print('Incoming tweet from {}: {}'.format(sender,text))
         
         if 'lunch' in text:
             r = randrange(len(clients))
-            reply = reply = "{} You should try {}! Order ahead with Ritual so everything is ready when you arrive! Here's the link {}".format(sender,clients[r],extensions[r])
+            reply = "{} You should try {}! Order ahead with Ritual so everything is ready when you arrive! Here's the link: {}".format(sender,clients[r],extensions[r])
             api.update_status(reply)        
     
     def on_error(self, status_code):
