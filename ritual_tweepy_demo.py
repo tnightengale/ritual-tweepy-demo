@@ -82,15 +82,19 @@ clients, extensions = ritual_establishments(ritual_site,2)
 
 global extensions
 global clients
+c_key = ''
+cs_key = ''
+a_token = ''
+as_token = ''
 
 
 # In[2]:
 
 
-consumer_key = 'EeaA4GzRd7R74hZQ39wQcf9TR'
-consumer_secret = 'DGbbUsBBqZnsgn8cZHM3JM9U4PescuwAqNJ0bXb7bY6Ksnjww8'
-access_token = '90526857-ub3I7U5ZN2EXwVFLDR6FqeT49ARFh0cKCgSaCYCiE'
-access_secret = 'v50OKO5Awcs8EwwQ0mQ1rvwzGFfPnzOrce4Ia9smEUtCQ'
+consumer_key = c_key
+consumer_secret = cs_key
+access_token = a_token
+access_secret = as_token
  
 auth = OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_secret)
