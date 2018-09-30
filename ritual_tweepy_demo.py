@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
 import urllib.request as url
 from bs4 import BeautifulSoup
 import re
@@ -11,21 +5,59 @@ import tweepy
 from tweepy import OAuthHandler
 import json
 from random import randrange
-import os
 
 
-# In[17]:
+def main():
+    '''
+    Calls the main initializations
+    to build the client list and 
+    run the tweepy stream.
+    '''
+    client_init()
+    
+    print('Initializing stream...')
+    stream_init()
 
 
-# open json with keys and assign keys
-with open('/Users/tnightengale/Desktop/Projects/Ritual_Tweepy/'+"authentication.json", "r") as read_file:
-    keys = json.load(read_file)
+def stream_init():
+    '''
+    Initializes the tweepy stream by calling api_init()
+    and using the return api object to create a stream.
+    This process is called here so that it can be recalled
+    in the event that the stream times out. In this way the
+    stream can run indefinitely. 
+    '''
+    api = api_init()
+    
+    myStreamListener = MyStreamListener(api)
+    myStream = tweepy.Stream(auth=api.auth,listener=myStreamListener)
+    monitor = '@' + api.me().screen_name
+    
+    myStream.filter(track=[monitor])
 
 
-# In[13]:
-
-
-def ritual_establishments(site, n_pages):
+def api_init():
+    '''
+    Initializes the api object used with
+    tweepy API, using keys stored in a 
+    JSON file.
+    '''
+    # open json with keys and assign keys
+    with open('/Users/tnightengale/Desktop/Projects/Ritual_Tweepy/'+"authentication.json", "r") as read_file:
+        keys = json.load(read_file)
+        
+    consumer_key = keys['lunchatron9000']['(API key)']
+    consumer_secret = keys['lunchatron9000']['(API secret key)']
+    access_token = keys['lunchatron9000']['(Access token)']
+    access_secret = keys['lunchatron9000']['(Access token secret)']
+     
+    auth = OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_secret)
+    api = tweepy.API(auth)
+    return api
+    
+    
+def ritual_establishments(site='https://order.ritual.co/city/toronto', n_pages=2):
     '''
     Takes in the url of the ritual website and 
     the number of pages to scrape, and returns
@@ -47,8 +79,7 @@ def ritual_establishments(site, n_pages):
         idlist = soup.find_all('div','card-marker')
         
         # create restaurant id extension to recreate url later
-        exten0 = re.search('.+?(?=city)',ritual_site).group(0) + 'menu/'
-        
+        exten0 = re.search('.+?(?=city)',site).group(0) + 'menu/'
         
         
         exten1 = [exten0+_.string.lower().replace("'",'').replace(' ','-').replace('(','').replace('/','-').replace(')','-').replace('--','-') for _ in taglist]
@@ -74,35 +105,10 @@ def ritual_establishments(site, n_pages):
     return names, ids
 
 
-# In[14]:
-
-
-ritual_site = 'https://order.ritual.co/city/toronto'
-
-
-# In[15]:
-
-global extensions
-global clients
-
-clients, extensions = ritual_establishments(ritual_site,2)
-
-
-# In[25]:
-
-
-consumer_key = keys['lunchatron9000']['(API key)']
-consumer_secret = keys['lunchatron9000']['(API secret key)']
-access_token = keys['lunchatron9000']['(Access token)']
-access_secret = keys['lunchatron9000']['(Access token secret)']
- 
-auth = OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_token, access_secret)
- 
-api = tweepy.API(auth)
-
-
-# In[27]:
+def client_init():
+    global extensions
+    global clients
+    clients, extensions = ritual_establishments()
 
 
 #override tweepy.StreamListener to add logic to on_status
@@ -124,34 +130,17 @@ class MyStreamListener(tweepy.StreamListener):
         if 'lunch' in text:
             r = randrange(len(clients))
             reply = "{} You should try {}! Order ahead with Ritual so everything is ready when you arrive! Here's the link: {}".format(sender,clients[r],extensions[r])
-            api.update_status(reply)        
-    
+            print('Replied with: {}'.format(reply))
+            self.api.update_status(reply)        
+
+    def on_timeout(self):
+        stream_init()
+	
     def on_error(self, status_code):
         if status_code == 420:
             #returning False in on_data disconnects the stream
             return False
 
 
-# In[37]:
-
-
-myStreamListener = MyStreamListener(api)
-
-
-# In[38]:
-
-
-myStream = tweepy.Stream(auth=api.auth,listener=myStreamListener)
-
-
-# In[39]:
-
-
-monitor = '@' + api.me().screen_name
-
-
-# In[ ]:
-
-
-myStream.filter(track=[monitor])
-
+if __name__== '__main__':
+    main()
