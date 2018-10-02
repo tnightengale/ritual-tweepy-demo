@@ -5,6 +5,15 @@ import tweepy
 from tweepy import OAuthHandler
 import json
 from random import randrange
+import time
+import datetime
+
+# error handling for streaming
+# no longer necessary because of
+# checking implementation
+from requests.exceptions import Timeout, ConnectionError
+from requests.packages.urllib3.exceptions import ReadTimeoutError
+from OpenSSL.SSL import WantReadError
 
 
 def main():
@@ -15,8 +24,12 @@ def main():
     '''
     client_init()
     
-    print('Initializing stream...')
-    stream_init()
+    #print('Initializing stream...')
+    #stream_init()
+    
+    print('Initializing checking routine...')
+    static_search(api=api_init(),username='@lunchatron9000')
+    
 
 
 def stream_init():
@@ -33,7 +46,7 @@ def stream_init():
     myStream = tweepy.Stream(auth=api.auth,listener=myStreamListener)
     monitor = '@' + api.me().screen_name
     
-    myStream.filter(track=[monitor])
+    myStream.filter(track=[monitor], async=True)
 
 
 def api_init():
@@ -72,33 +85,34 @@ def ritual_establishments(site='https://order.ritual.co/city/toronto', n_pages=2
     
     for extension in pg_extensions:
         
-        current_page = url.urlopen(site + extension)
-        soup = BeautifulSoup(current_page, 'html.parser')
-        
-        taglist = soup.find_all('h2','card-title')
-        idlist = soup.find_all('div','card-marker')
-        
-        # create restaurant id extension to recreate url later
-        exten0 = re.search('.+?(?=city)',site).group(0) + 'menu/'
-        
-        
-        exten1 = [exten0+_.string.lower().replace("'",'').replace(' ','-').replace('(','').replace('/','-').replace(')','-').replace('--','-') for _ in taglist]
-        
-        
-        exten2 = [str(item) for item in idlist]
-        exten2 = [re.search('card_marker_....',_).group(0) for _ in exten2]
-        exten2 = ['toronto/' + item.split('_')[2] for item in exten2]
-        
-        exten = [i+j for i,j in zip(exten1,exten2)]
-        
-        
-        # clean names
-        establishments = [_.string for _ in taglist]
-        establishments = [re.search('[^(]*',_).group(0) for _ in establishments]
-        establishments = [_.rstrip(' ') for _ in establishments]
-        
-        names.append(establishments)
-        ids.append(exten)
+        with url.urlopen(site + extension) as current_page:
+            #current_page = url.urlopen(site + extension)
+            soup = BeautifulSoup(current_page, 'html.parser')
+            
+            taglist = soup.find_all('h2','card-title')
+            idlist = soup.find_all('div','card-marker')
+            
+            # create restaurant id extension to recreate url later
+            exten0 = re.search('.+?(?=city)',site).group(0) + 'menu/'
+            
+            
+            exten1 = [exten0+_.string.lower().replace("'",'').replace(' ','-').replace('(','').replace('/','-').replace(')','-').replace('--','-') for _ in taglist]
+            
+            
+            exten2 = [str(item) for item in idlist]
+            exten2 = [re.search('card_marker_....',_).group(0) for _ in exten2]
+            exten2 = ['toronto/' + item.split('_')[2] for item in exten2]
+            
+            exten = [i+j for i,j in zip(exten1,exten2)]
+            
+            
+            # clean names
+            establishments = [_.string for _ in taglist]
+            establishments = [re.search('[^(]*',_).group(0) for _ in establishments]
+            establishments = [_.rstrip(' ') for _ in establishments]
+            
+            names.append(establishments)
+            ids.append(exten)
     
     names = [i for j in names for i in j]
     ids = [i for j in ids for i in j]
@@ -122,16 +136,22 @@ class MyStreamListener(tweepy.StreamListener):
     
     def on_status(self, status):
         # process tweet
-    
-        text = status.text
-        sender = '@' + status.user.screen_name
-        print('Incoming tweet from {}: {}'.format(sender,text))
-        
-        if 'lunch' in text:
-            r = randrange(len(clients))
-            reply = "{} You should try {}! Order ahead with Ritual so everything is ready when you arrive! Here's the link: {}".format(sender,clients[r],extensions[r])
-            print('Replied with: {}'.format(reply))
-            self.api.update_status(reply)        
+        while True:
+            try:
+                text = status.text
+                sender = '@' + status.user.screen_name
+                print('Incoming tweet from {}: {}'.format(sender,text))
+                
+                if 'lunch' in text:
+                    r = randrange(len(clients))
+                    reply = "{} You should try {}! Order ahead with Ritual so everything is ready when you arrive! Here's the link: {}".format(sender,clients[r],extensions[r])
+                    print('Replied with: {}'.format(reply))
+                    self.api.update_status(reply)
+            except (Timeout,ConnectionError,ReadTimeoutError,WantReadError) as e:
+                print('Time out error caught: {}'.format(e))
+                time.sleep(30)
+                continue
+            
 
     def on_timeout(self):
         stream_init()
@@ -140,6 +160,57 @@ class MyStreamListener(tweepy.StreamListener):
         if status_code == 420:
             #returning False in on_data disconnects the stream
             return False
+
+def static_search(api,username):
+    '''
+    Takes in an api and the corresponding
+    username to monitor the account in an
+    infinite loop and reply to requests. 
+    In this case the reply is immutable 
+    within this function, and specific 
+    to the lunchatron9000 bot.
+    '''
+    
+    while True:
+        
+        latest_mention = api.search(username,count=1)[0]
+        
+        # wait to check for new mentions
+        seconds = 60*45 
+        time.sleep(seconds)
+        
+        new_mention = api.search(username,count=1)[0]
+        
+        if latest_mention.id == new_mention.id:
+            print('No new mentions at time: {}'.format(datetime.datetime.now()))
+            print('Will recheck in {} minutes'.format(int(seconds/60)))
+            pass
+        
+        else:
+            status = new_mention
+            text = status.text
+            sender = '@' + status.user.screen_name
+            print('Incoming tweet from {}: {}'.format(sender,text))
+            checks = ['eat','have', ' lunch ']
+            
+            if any(word in text for word in checks):
+                
+                r = randrange(len(clients))
+                reply = "{} You should try {}! Order ahead with Ritual so everything is ready when you arrive! Here's the link: {}".format(sender,clients[r],extensions[r])
+                print('Replied with: {}'.format(reply))
+                api.update_status(reply)
+            
+            else:
+                reply = "I can't answer that. Beep Boop."
+                print('Replied with: {}'.format(reply))
+                api.update_status(reply)
+        
+        
+            
+    
+    
+    
+    
 
 
 if __name__== '__main__':
